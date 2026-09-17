@@ -21,6 +21,13 @@ const campusesData = [
     state: 'Karnataka',
     isActive: true,
   },
+  {
+    campusName: 'Poornima College of Engineering',
+    emailDomain: 'poornima.org',
+    city: 'Jaipur',
+    state: 'Rajasthan',
+    isActive: true,
+  },
 ];
 
 const seedDatabase = async () => {

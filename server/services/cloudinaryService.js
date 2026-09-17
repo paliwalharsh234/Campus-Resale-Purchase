@@ -1,5 +1,17 @@
 const cloudinary = require('../config/cloudinary');
 
+const hasCloudinaryCredentials = () => {
+  const configuredValues = [
+    process.env.CLOUDINARY_CLOUD_NAME,
+    process.env.CLOUDINARY_API_KEY,
+    process.env.CLOUDINARY_API_SECRET,
+  ];
+
+  return configuredValues.every(
+    (value) => value && !value.startsWith('your_') && value !== 'placeholder'
+  );
+};
+
 /**
  * Upload a single image buffer directly to Cloudinary using upload_stream
  * @param {Buffer} fileBuffer - Image buffer from Multer memoryStorage
@@ -9,10 +21,7 @@ const cloudinary = require('../config/cloudinary');
 const uploadToCloudinary = (fileBuffer, folder = 'campus_resale/listings') => {
   return new Promise((resolve, reject) => {
     // If Cloudinary credentials are mock or missing in development, return a fallback placeholder image
-    if (
-      !process.env.CLOUDINARY_CLOUD_NAME ||
-      process.env.CLOUDINARY_CLOUD_NAME === 'placeholder'
-    ) {
+    if (!hasCloudinaryCredentials()) {
       console.log('ℹ️ Cloudinary credentials not configured; using local data URI fallback');
       const base64Image = `data:image/jpeg;base64,${fileBuffer.toString('base64')}`;
       return resolve({
