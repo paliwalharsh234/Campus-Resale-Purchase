@@ -6,6 +6,13 @@ const createTransport = require('../config/email');
 const sendEmail = async ({ to, subject, html, text }) => {
   try {
     const transporter = createTransport();
+
+    // If email is not configured (missing env vars), skip silently
+    if (!transporter) {
+      console.warn(`📧 [EMAIL SKIPPED] Would have sent "${subject}" to ${to} — email not configured.`);
+      return null;
+    }
+
     const mailOptions = {
       from: `"Campus Resale & Purchase" <${process.env.EMAIL_USER || 'noreply@campusresale.com'}>`,
       to,
@@ -19,10 +26,7 @@ const sendEmail = async ({ to, subject, html, text }) => {
     return info;
   } catch (error) {
     console.error(`⚠️ Email sending failed to ${to}:`, error.message);
-    // In dev / test we don't necessarily want to block registration if SMTP isn't configured yet
-    if (process.env.NODE_ENV === 'development') {
-      console.log('ℹ️ [DEV NOTE] Check console or mock for the verification / reset token');
-    }
+    // Always return null on failure — never block registration due to email issues
     return null;
   }
 };

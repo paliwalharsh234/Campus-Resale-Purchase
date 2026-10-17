@@ -6,6 +6,12 @@ const createTransport = () => {
     return nodemailer.createTransport({ jsonTransport: true });
   }
 
+  // If email credentials are not configured, return null so emailService can skip gracefully
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    console.warn('⚠️  EMAIL_USER or EMAIL_PASSWORD not set — email sending is disabled.');
+    return null;
+  }
+
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT) || 587,
