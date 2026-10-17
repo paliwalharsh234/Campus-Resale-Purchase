@@ -35,8 +35,6 @@ const campusSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Index for fast domain lookups during registration
-campusSchema.index({ emailDomain: 1 });
 campusSchema.index({ isActive: 1 });
 
 module.exports = mongoose.model('Campus', campusSchema);

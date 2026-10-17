@@ -6,10 +6,8 @@ const ApiError = require('../utils/ApiError');
  */
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
-  // Log stack in development
-  if (process.env.NODE_ENV === 'development') {
-    console.error('❌ Error:', err);
-  }
+  // Always log error details so we can diagnose issues in production
+  console.error(`❌ [${req.method}] ${req.originalUrl || req.url} Error:`, err);
 
   // Mongoose validation error
   if (err.name === 'ValidationError') {
@@ -58,9 +56,8 @@ const errorHandler = (err, req, res, next) => {
   // Unknown / programming errors
   return res.status(500).json({
     success: false,
-    message: process.env.NODE_ENV === 'production'
-      ? 'Something went wrong. Please try again later.'
-      : err.message,
+    message: err.message || 'Something went wrong. Please try again later.',
+    error: err.toString(),
   });
 };
 

@@ -95,8 +95,12 @@ const register = asyncHandler(async (req, res, next) => {
     verificationTokenExpires: verificationExpires,
   });
 
-  // 5. Send verification email (fails gracefully in development)
-  await sendVerificationEmail(normalizedEmail, name, rawToken);
+  // 5. Send verification email (fails gracefully if email transport fails)
+  try {
+    await sendVerificationEmail(normalizedEmail, name, rawToken);
+  } catch (emailErr) {
+    console.error('⚠️ Verification email failed to send:', emailErr.message);
+  }
 
   res.status(201).json({
     success: true,
