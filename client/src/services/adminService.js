@@ -18,6 +18,11 @@ export const adminService = {
     return res.data;
   },
 
+  toggleUserVerification: async (userId) => {
+    const res = await api.patch(`/admin/users/${userId}/verify`);
+    return res.data;
+  },
+
   // Listings
   getListings: async (params = {}) => {
     const res = await api.get('/admin/listings', { params });

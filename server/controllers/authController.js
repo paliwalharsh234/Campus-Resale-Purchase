@@ -90,7 +90,7 @@ const register = asyncHandler(async (req, res, next) => {
     course: course || '',
     branch: branch || '',
     graduationYear: graduationYear ? Number(graduationYear) : null,
-    isEmailVerified: false,
+    isEmailVerified: true,
     verificationToken: hashedToken,
     verificationTokenExpires: verificationExpires,
   });
@@ -104,7 +104,7 @@ const register = asyncHandler(async (req, res, next) => {
 
   res.status(201).json({
     success: true,
-    message: 'Registration successful! Please check your campus email for the verification link.',
+    message: 'Registration successful! Your campus account is ready. You can now log in.',
     user: {
       id: newUser._id,
       name: newUser.name,

@@ -55,6 +55,23 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleToggleVerify = async (userId, currentName, isVerified) => {
+    const action = isVerified ? 'un-verify' : 'verify';
+    if (!window.confirm(`Are you sure you want to ${action} email for ${currentName}?`)) return;
+
+    try {
+      const res = await adminService.toggleUserVerification(userId);
+      if (res.success) {
+        toast.success(res.message);
+        setUsers((prev) =>
+          prev.map((u) => (u._id === userId ? { ...u, isEmailVerified: res.isEmailVerified } : u))
+        );
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to update verification status.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -100,20 +117,21 @@ export default function AdminUsersPage() {
                 <th className="px-6 py-3">Campus</th>
                 <th className="px-6 py-3">Course / Branch</th>
                 <th className="px-6 py-3">Role</th>
+                <th className="px-6 py-3">Verified</th>
                 <th className="px-6 py-3">Status</th>
-                <th className="px-6 py-3 text-right">Action</th>
+                <th className="px-6 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
                     Loading users...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
                     No users found matching query.
                   </td>
                 </tr>
@@ -148,6 +166,17 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
+                      {u.isEmailVerified ? (
+                        <span className="inline-flex items-center gap-1 font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full text-[10px]">
+                          <CheckCircle className="w-3 h-3" /> Verified
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 font-bold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full text-[10px]">
+                          Pending
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
                       {u.isSuspended ? (
                         <span className="inline-flex items-center gap-1 font-bold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full text-[10px]">
                           <AlertTriangle className="w-3 h-3" /> Suspended
@@ -158,18 +187,30 @@ export default function AdminUsersPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right space-x-2">
                       {u.role !== 'admin' && (
-                        <button
-                          onClick={() => handleToggleSuspend(u._id, u.name, u.isSuspended)}
-                          className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${
-                            u.isSuspended
-                              ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                              : 'bg-red-50 text-red-600 hover:bg-red-100'
-                          }`}
-                        >
-                          {u.isSuspended ? 'Reactivate' : 'Suspend'}
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleToggleVerify(u._id, u.name, u.isEmailVerified)}
+                            className={`text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors ${
+                              u.isEmailVerified
+                                ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                            }`}
+                          >
+                            {u.isEmailVerified ? 'Unverify' : 'Verify'}
+                          </button>
+                          <button
+                            onClick={() => handleToggleSuspend(u._id, u.name, u.isSuspended)}
+                            className={`text-xs font-bold px-2.5 py-1.5 rounded-lg transition-colors ${
+                              u.isSuspended
+                                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                : 'bg-red-50 text-red-600 hover:bg-red-100'
+                            }`}
+                          >
+                            {u.isSuspended ? 'Reactivate' : 'Suspend'}
+                          </button>
+                        </>
                       )}
                     </td>
                   </tr>

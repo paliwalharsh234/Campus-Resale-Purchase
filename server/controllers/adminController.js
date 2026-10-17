@@ -108,6 +108,30 @@ const toggleUserSuspension = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Toggle user email verification status
+// @route   PATCH /api/admin/users/:id/verify
+// @access  Admin only
+const toggleUserVerification = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+
+  if (!user) {
+    return next(ApiError.notFound('User not found.'));
+  }
+
+  user.isEmailVerified = !user.isEmailVerified;
+  if (user.isEmailVerified) {
+    user.verificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+  }
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: `User email verification set to ${user.isEmailVerified ? 'Verified' : 'Unverified'}.`,
+    isEmailVerified: user.isEmailVerified,
+  });
+});
+
 // ─── LISTINGS MODERATION ───────────────────────────────────────────────────
 // @desc    Get all listings across all campuses
 // @route   GET /api/admin/listings
@@ -329,6 +353,7 @@ module.exports = {
   getAdminStats,
   getAllUsers,
   toggleUserSuspension,
+  toggleUserVerification,
   getAllListings,
   adminDeleteListing,
   getReports,

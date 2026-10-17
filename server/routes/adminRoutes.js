@@ -6,6 +6,7 @@ const {
   getAdminStats,
   getAllUsers,
   toggleUserSuspension,
+  toggleUserVerification,
   getAllListings,
   adminDeleteListing,
   getReports,
@@ -25,6 +26,7 @@ router.get('/stats', getAdminStats);
 // Users
 router.get('/users', getAllUsers);
 router.patch('/users/:id/suspend', toggleUserSuspension);
+router.patch('/users/:id/verify', toggleUserVerification);
 
 // Listings
 router.get('/listings', getAllListings);
