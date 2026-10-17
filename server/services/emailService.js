@@ -1,34 +1,68 @@
-const createTransport = require('../config/email');
+const { Resend } = require('resend');
 
 /**
- * Send an email using the configured transport
+ * Send an email using Resend (primary) or nodemailer Gmail (fallback).
+ * Resend has much better deliverability for college email servers.
  */
 const sendEmail = async ({ to, subject, html, text }) => {
-  try {
-    const transporter = createTransport();
+  // ── Resend (primary) ────────────────────────────────────────────────────────
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const { data, error } = await resend.emails.send({
+        from: 'Campus Resale <onboarding@resend.dev>',
+        to,
+        subject,
+        html,
+        text,
+      });
 
-    // If email is not configured (missing env vars), skip silently
-    if (!transporter) {
-      console.warn(`📧 [EMAIL SKIPPED] Would have sent "${subject}" to ${to} — email not configured.`);
+      if (error) {
+        console.error(`⚠️ Resend error sending to ${to}:`, error);
+        return null;
+      }
+
+      console.log(`✉️ Email sent via Resend to ${to}: ${data?.id || 'OK'}`);
+      return data;
+    } catch (err) {
+      console.error(`⚠️ Resend exception sending to ${to}:`, err.message);
       return null;
     }
-
-    const mailOptions = {
-      from: `"Campus Resale & Purchase" <${process.env.EMAIL_USER || 'noreply@campusresale.com'}>`,
-      to,
-      subject,
-      text,
-      html,
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✉️ Email sent to ${to}: ${info.messageId || 'OK'}`);
-    return info;
-  } catch (error) {
-    console.error(`⚠️ Email sending failed to ${to}:`, error.message);
-    // Always return null on failure — never block registration due to email issues
-    return null;
   }
+
+  // ── Nodemailer Gmail (fallback if RESEND_API_KEY not set) ───────────────────
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+    try {
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.EMAIL_PORT) || 587,
+        secure: false,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD,
+        },
+      });
+
+      const info = await transporter.sendMail({
+        from: `"Campus Resale & Purchase" <${process.env.EMAIL_USER}>`,
+        to,
+        subject,
+        html,
+        text,
+      });
+
+      console.log(`✉️ Email sent via Gmail to ${to}: ${info.messageId}`);
+      return info;
+    } catch (err) {
+      console.error(`⚠️ Gmail sending failed to ${to}:`, err.message);
+      return null;
+    }
+  }
+
+  // ── No email provider configured ─────────────────────────────────────────────
+  console.warn(`📧 [EMAIL SKIPPED] No email provider configured. Would have sent "${subject}" to ${to}`);
+  return null;
 };
 
 /**
@@ -37,7 +71,7 @@ const sendEmail = async ({ to, subject, html, text }) => {
 const sendVerificationEmail = async (email, name, token) => {
   const verifyUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/verify-email/${token}`;
   const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb; rounded: 8px;">
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
       <h2 style="color: #4f46e5;">Welcome to Campus Resale, ${name}!</h2>
       <p>Thank you for joining your campus marketplace. Please verify your official college email address to activate your account.</p>
       <div style="margin: 24px 0;">
@@ -60,7 +94,7 @@ const sendVerificationEmail = async (email, name, token) => {
 const sendPasswordResetEmail = async (email, name, token) => {
   const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${token}`;
   const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb; rounded: 8px;">
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
       <h2 style="color: #4f46e5;">Password Reset Request</h2>
       <p>Hello ${name}, we received a request to reset your password for Campus Resale.</p>
       <div style="margin: 24px 0;">
