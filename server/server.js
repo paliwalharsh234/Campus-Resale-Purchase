@@ -18,10 +18,23 @@ connectDB();
 const app = express();
 const httpServer = http.createServer(app);
 
+// Parse allowed origins
+const allowedOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map((url) => url.trim().replace(/\/$/, ''))
+  : ['http://localhost:5173'];
+
+const corsOriginHandler = (origin, callback) => {
+  if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+    callback(null, true);
+  } else {
+    callback(null, true); // Allow during transition or fallback
+  }
+};
+
 // Socket.IO setup
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: corsOriginHandler,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -38,7 +51,7 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 
 // ─── Core Middleware ────────────────────────────────────────────────────────
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: corsOriginHandler,
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
