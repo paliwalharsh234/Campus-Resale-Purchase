@@ -16,6 +16,10 @@ dotenv.config();
 connectDB();
 
 const app = express();
+
+// Trust Render's proxy (required for express-rate-limit and correct IP detection)
+app.set('trust proxy', 1);
+
 const httpServer = http.createServer(app);
 
 // Parse allowed origins
